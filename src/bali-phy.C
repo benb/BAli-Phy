@@ -421,6 +421,11 @@ void do_sampling(const variables_map& args,Parameters& P,long int max_iterations
   add_slice_moves(P, "epsilon",     "epsilon_slice_window",   1.0,
 		  false,0,false,0,slice_moves,transform_epsilon,inverse_epsilon);
 
+  add_MH_move(P, less_than(0,shift_cauchy), "lambda_s",      "lambda_shift_sigma",    0.35, parameter_moves);
+  add_MH_move(P, less_than(0,shift_cauchy), "lambda_f",      "lambda_shift_sigma",    0.35, parameter_moves);
+  add_MH_move(P, shift_epsilon,               "r_s",     "epsilon_shift_sigma",   0.15, parameter_moves);
+  add_MH_move(P, shift_epsilon,               "r_f",     "epsilon_shift_sigma",   0.15, parameter_moves);
+  add_MH_move(P, between(0,1,shift_cauchy), "switch",   "invariant_shift_sigma", 0.15, parameter_moves);
   add_MH_move(P, between(0,1,shift_cauchy), "invariant",   "invariant_shift_sigma", 0.15, parameter_moves);
   
   set_if_undef(P.keys,"pi_dirichlet_N",1.0);
@@ -1492,6 +1497,17 @@ void log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,const
 
 int main(int argc,char* argv[])
 { 
+
+  TKF1_Transducer Q(false);
+
+  Q.get_branch_Transducer(1.0);
+
+  FS_Transducer Q_FS(false);
+
+  Q_FS.get_branch_Transducer(1.0);
+  
+  //  exit(0);
+
   int n_procs = 1;
   int proc_id = 0;
 
@@ -1567,8 +1583,10 @@ int main(int argc,char* argv[])
       imodel_mapping = imodel_names_mapping.item_for_partition;
     }
 
-    vector<polymorphic_cow_ptr<IndelModel> > 
-      full_imodels = get_imodels(imodel_names_mapping);
+    //vector<polymorphic_cow_ptr<IndelModel> > 
+    //  full_imodels = get_imodels(imodel_names_mapping);
+    vector<polymorphic_cow_ptr<TransducerIndelModel> > full_imodels;
+    full_imodels.push_back(polymorphic_cow_ptr<TransducerIndelModel>(Q_FS));
 
     //----------- Load alignment and tree ---------//
     vector<alignment> A;
@@ -1612,6 +1630,7 @@ int main(int argc,char* argv[])
     shared_items<string> scale_names_mapping = get_mapping(args, "same-scale", A.size());
 
     vector<int> scale_mapping = scale_names_mapping.item_for_partition;
+
 
     //-------------Create the Parameters object--------------//
     Parameters P(A, T, full_smodels, smodel_mapping, full_imodels, imodel_mapping, scale_mapping);
@@ -1659,6 +1678,7 @@ int main(int argc,char* argv[])
 
       add_leaf_seq_note(*P[i].A, T.n_leaves());
       add_subA_index_note(*P[i].A, T.n_branches());
+      add_column_type_note(*P[i].A);
     }
 
     // Why do we need to do this, again?
