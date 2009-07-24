@@ -816,7 +816,7 @@ void Sampler::go(Parameters& P,int subsample,const int max_iter,
 
   // make sure that the Alignment and Tree are linked
   for(int i=0;i<P.n_data_partitions();i++) {
-    if (P[i].has_IModel())
+    if (P[i].has_IModel() or P[i].has_TIModel())
       assert(P[i].A->n_sequences() == T.n_nodes()); 
    else
       assert(P[i].A->n_sequences() == T.n_leaves());
@@ -864,7 +864,7 @@ void Sampler::go(Parameters& P,int subsample,const int max_iter,
   s_parameters<<"likelihood\tlogp\tbeta\t";
   s_parameters<<P.header();
   for(int i=0;i<P.n_data_partitions();i++) {
-    if (P[i].has_IModel()) {
+    if (P[i].has_IModel() or P[i].has_TIModel()) {
       s_parameters<<"\t|A"<<i+1<<"|";
       s_parameters<<"\t#indels"<<i+1;
       s_parameters<<"\t|indels"<<i+1<<"|";
@@ -951,7 +951,7 @@ void Sampler::go(Parameters& P,int subsample,const int max_iter,
       unsigned total_substs=0;
       for(int i=0;i<P.n_data_partitions();i++)
       {
-	if (P[i].has_IModel()) {
+	if (P[i].has_IModel() or P[i].has_TIModel()) {
 	  unsigned x1 = P[i].A->length();
 	  total_length += x1;
 
